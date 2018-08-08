@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from torch.optim import lr_scheduler
 import random, sys, pickle
 import argparse
-import tqdm
+from tqdm import tqdm
 
 from maml import MAML
 
@@ -38,13 +38,13 @@ def main():
     print('mini-imagenet: %d-way %d-shot meta-lr:%f, train-lr:%f K-steps:%d' % (
     n_way, k_shot, meta_lr, train_lr, K))
 
-    device = torch.device('cuda:0')
+    device = torch.device('cuda:2')
     net = MAML(n_way, k_shot, k_query, meta_batchsz, K, meta_lr, train_lr).to(device)
     print(net)
 
-    for epoch in tqdm(range(1000)):
+    for epoch in range(1000):
         # batchsz here means total episode number
-        mini = MiniImagenet('/hdd1/liangqu/datasets/miniimagenet/', mode='train', n_way=n_way,
+        mini = MiniImagenet('/data/miniimagenet/', mode='train', n_way=n_way,
                             k_shot=k_shot, k_query=k_query,
                             batchsz=10000, resize=imgsz)
         # fetch meta_batchsz num of episode each time
@@ -60,11 +60,11 @@ def main():
             accs = net(support_x, support_y, query_x, query_y, training=True)
 
             if step % 50 == 0:
-                print(epoch, step, '\t', accs)
+                print("epoch: {}, step: {}, {}accuracy: {}".format(epoch, step, '\t', accs))
 
             if step % 500 == 0 and step != 0:  # evaluation
                 # test for 600 episodes
-                mini_test = MiniImagenet('/hdd1/liangqu/datasets/miniimagenet/', mode='test',
+                mini_test = MiniImagenet('/data/miniimagenet/', mode='test',
                                          n_way=n_way, k_shot=k_shot, k_query=k_query,
                                          batchsz=600, resize=imgsz)
                 db_test = DataLoader(mini_test, meta_batchsz, shuffle=True,
